@@ -40,7 +40,7 @@ int ReceivePosition(igtl::Socket * socket, igtl::MessageHeader * header);
 int ReceiveStatus(igtl::Socket * socket, igtl::MessageHeader * header);
 
 #if OpenIGTLink_PROTOCOL_VERSION >= 2
-int ReceivePoint(igtl::Socket * socket, igtl::MessageHeader * header);
+int ReceivePoint(igtl::Socket * socket, igtl::MessageHeader * header, std::ofstream& ofs);
 int ReceiveTrajectory(igtl::Socket * socket, igtl::MessageHeader::Pointer& header);
 int ReceiveString(igtl::Socket * socket, igtl::MessageHeader * header);
 int ReceiveBind(igtl::Socket * socket, igtl::MessageHeader * header);
@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
 #if OpenIGTLink_PROTOCOL_VERSION >= 2
         else if (strcmp(headerMsg->GetDeviceType(), "POINT") == 0)
           {
-          ReceivePoint(socket, headerMsg);
+          ReceivePoint(socket, headerMsg, ofs);
           }
         else if (strcmp(headerMsg->GetDeviceType(), "TRAJ") == 0)
           {
@@ -234,7 +234,7 @@ int ReceiveTransform(igtl::Socket * socket, igtl::MessageHeader * header, std::o
     ofs << matrix[0][0] << "," << matrix[0][1] << "," << matrix[0][2] << "," << matrix[0][3] << ",";
     ofs << matrix[1][0] << "," << matrix[1][1] << "," << matrix[1][2] << "," << matrix[1][3] << ",";
     ofs << matrix[2][0] << "," << matrix[2][1] << "," << matrix[2][2] << "," << matrix[2][3] << ",";
-    ofs << matrix[3][0] << "," << matrix[3][1] << "," << matrix[3][2] << "," << matrix[3][3];
+    ofs << matrix[3][0] << "," << matrix[3][1] << "," << matrix[3][2] << "," << matrix[3][3] << ",";
     return 1;
     }
 
@@ -314,7 +314,7 @@ int ReceiveStatus(igtl::Socket * socket, igtl::MessageHeader * header)
 
 
 #if OpenIGTLink_PROTOCOL_VERSION >= 2
-int ReceivePoint(igtl::Socket * socket, igtl::MessageHeader * header)
+int ReceivePoint(igtl::Socket * socket, igtl::MessageHeader * header, std::ofstream& ofs)
 {
 
   std::cerr << "Receiving POINT data type." << std::endl;
@@ -346,14 +346,22 @@ int ReceivePoint(igtl::Socket * socket, igtl::MessageHeader * header)
       igtlFloat32 pos[3];
       pointElement->GetPosition(pos);
 
-      std::cerr << "========== Element #" << i << " ==========" << std::endl;
-      std::cerr << " Name      : " << pointElement->GetName() << std::endl;
-      std::cerr << " GroupName : " << pointElement->GetGroupName() << std::endl;
-      std::cerr << " RGBA      : ( " << (int)rgba[0] << ", " << (int)rgba[1] << ", " << (int)rgba[2] << ", " << (int)rgba[3] << " )" << std::endl;
-      std::cerr << " Position  : ( " << std::fixed << pos[0] << ", " << pos[1] << ", " << pos[2] << " )" << std::endl;
-      std::cerr << " Radius    : " << std::fixed << pointElement->GetRadius() << std::endl;
-      std::cerr << " Owner     : " << pointElement->GetOwner() << std::endl;
-      std::cerr << "================================" << std::endl;
+      // Format: element#, group name, owner, R, G, B, A, x, y, z, rad, element#, group name, owner, R, G, B, A, x, y, z, rad, ...
+      ofs << pointElement->GetName() << ","
+          << pointElement->GetGroupName() << ","
+          << pointElement->GetOwner() << ","
+          << (int)rgba[0] << "," << (int)rgba[1] << "," << (int)rgba[2] << "," << (int)rgba[3] << ","
+          << std::fixed << pos[0] << "," << pos[1] << "," << pos[2] << ","
+          << std::fixed << pointElement->GetRadius() << ",";
+      
+      //std::cerr << "========== Element #" << i << " ==========" << std::endl;
+      //std::cerr << " Name      : " << pointElement->GetName() << std::endl;
+      //std::cerr << " GroupName : " << pointElement->GetGroupName() << std::endl;
+      //std::cerr << " RGBA      : ( " << (int)rgba[0] << ", " << (int)rgba[1] << ", " << (int)rgba[2] << ", " << (int)rgba[3] << " )" << std::endl;
+      //std::cerr << " Position  : ( " << std::fixed << pos[0] << ", " << pos[1] << ", " << pos[2] << " )" << std::endl;
+      //std::cerr << " Radius    : " << std::fixed << pointElement->GetRadius() << std::endl;
+      //std::cerr << " Owner     : " << pointElement->GetOwner() << std::endl;
+      //std::cerr << "================================" << std::endl;
       }
     }
 
