@@ -9,6 +9,8 @@ find_package(OpenIGTLink REQUIRED)
 
 include(${OpenIGTLink_USE_FILE})
 
-ADD_EXECUTABLE(IGTLTrackingRecorder IGTLTrackingRecorder.cxx)
+ADD_EXECUTABLE(IGTLTrackingRecorderServer IGTLTrackingRecorderServer.cxx)
+ADD_EXECUTABLE(IGTLTrackingRecorderClient IGTLTrackingRecorderClient.cxx)
 
-TARGET_LINK_LIBRARIES(IGTLTrackingRecorder OpenIGTLink)
+TARGET_LINK_LIBRARIES(IGTLTrackingRecorderServer OpenIGTLink)
+TARGET_LINK_LIBRARIES(IGTLTrackingRecorderClient OpenIGTLink)
