@@ -32,6 +32,7 @@
 #include "igtlStringMessage.h"
 #include "igtlBindMessage.h"
 #include "igtlCapabilityMessage.h"
+#include "igtlTrackingDataMessage.h"
 #endif //OpenIGTLink_PROTOCOL_VERSION >= 2
 
 
@@ -45,6 +46,7 @@ int ReceiveTrajectory(igtl::Socket * socket, igtl::MessageHeader::Pointer& heade
 int ReceiveString(igtl::Socket * socket, igtl::MessageHeader * header);
 int ReceiveBind(igtl::Socket * socket, igtl::MessageHeader * header);
 int ReceiveCapability(igtl::Socket * socket, igtl::MessageHeader * header);
+int ReceiveTrackingData(igtl::Socket * socket, igtl::MessageHeader * header, std::ofstream& ofs);
 #endif //OpenIGTLink_PROTOCOL_VERSION >= 2
 
 int main(int argc, char* argv[])
@@ -175,6 +177,10 @@ int main(int argc, char* argv[])
       else if (strcmp(headerMsg->GetDeviceType(), "CAPABILITY") == 0)
         {
         ReceiveCapability(socket, headerMsg);;
+        }
+      else if (strcmp(headerMsg->GetDeviceType(), "TDATA") == 0)
+        {
+          ReceiveTrackingData(socket, headerMsg, ofs);
         }
 #endif //OpenIGTLink_PROTOCOL_VERSION >= 2
       else
@@ -517,5 +523,48 @@ int ReceiveCapability(igtl::Socket * socket, igtl::MessageHeader * header)
   
 }
 
+
+int ReceiveTrackingData(igtl::Socket * socket, igtl::MessageHeader * header, std::ofstream& ofs)
+{
+  std::cerr << "Receiving TDATA data type." << std::endl;
+  
+  //------------------------------------------------------------
+  // Allocate TrackingData Message Class
+
+  igtl::TrackingDataMessage::Pointer trackingData;
+  trackingData = igtl::TrackingDataMessage::New();
+  trackingData->SetMessageHeader(header);
+  trackingData->AllocatePack();
+
+  // Receive body from the socket
+  socket->Receive(trackingData->GetPackBodyPointer(), trackingData->GetPackBodySize());
+
+  // Deserialize the transform data
+  // If you want to skip CRC check, call Unpack() without argument.
+  int c = trackingData->Unpack(1);
+
+  if (c & igtl::MessageHeader::UNPACK_BODY) // if CRC check is OK
+    {
+    int nElements = trackingData->GetNumberOfTrackingDataElements();
+    for (int i = 0; i < nElements; i ++)
+      {
+      igtl::TrackingDataElement::Pointer trackingElement;
+      trackingData->GetTrackingDataElement(i, trackingElement);
+
+      igtl::Matrix4x4 matrix;
+      trackingElement->GetMatrix(matrix);
+
+      // Format: element#, group name, owner, R, G, B, A, x, y, z, rad, element#, group name, owner, R, G, B, A, x, y, z, rad, ...
+      ofs << trackingElement->GetName() << ","
+          << "GROUP,"
+          << "OWNER,"
+          << "0,0,0,0,"
+          << std::fixed << matrix[0][3] << "," << matrix[1][3] << "," << matrix[2][3] << ","
+          << "1.0,";
+      }
+    return 1;
+    }
+  return 0;
+}
 
 #endif //OpenIGTLink_PROTOCOL_VERSION >= 2
