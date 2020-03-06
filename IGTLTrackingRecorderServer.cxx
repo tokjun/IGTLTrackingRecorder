@@ -107,11 +107,10 @@ int main(int argc, char* argv[])
       // Arrival Time Stamp
       igtl::TimeStamp::Pointer ats;
       ats = igtl::TimeStamp::New();
-
-
+      
       //------------------------------------------------------------
       // loop
-      for (int i = 0; i < 100; i ++)
+      for (;;)
         {
 
         // Initialize receive buffer
@@ -576,6 +575,7 @@ int ReceiveTrackingData(igtl::Socket * socket, igtl::MessageHeader * header, std
           << std::fixed << matrix[0][3] << "," << matrix[1][3] << "," << matrix[2][3] << ","
           << "1.0,";
       }
+    ofs << std::endl;
     return 1;
     }
   return 0;
